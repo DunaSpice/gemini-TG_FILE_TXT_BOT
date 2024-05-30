@@ -87,32 +87,6 @@ async def newchat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await init_msg.edit_text("New chat session started.")
 
 
-
-async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /help is issued."""
-    help_text = """
-Basic commands:
-/start - Start the bot
-/help - Get help. Shows this message
-
-Chat commands:
-/new - Start a new chat session (model will forget previously generated messages)
-
-Send a message to the bot to generate a response.
-"""
-    await update.message.reply_text(help_text)
-
-
-async def newchat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Start a new chat session."""
-    init_msg = await update.message.reply_text(
-        text="Starting new chat session...",
-        reply_to_message_id=update.message.message_id,
-    )
-    new_chat(context)
-    await init_msg.edit_text("New chat session started.")
-
-
 # Define the function that will handle incoming messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handles incoming text messages from users.
@@ -252,4 +226,3 @@ async def handle_image(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
                     reply_to_message_id=init_msg.message_id,
                     disable_web_page_preview=True,
                 )
-        await asyncio.sleep(0.1)
