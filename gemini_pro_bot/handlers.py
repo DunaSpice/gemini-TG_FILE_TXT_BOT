@@ -15,10 +15,26 @@ import PIL.Image as load_image
 from io import BytesIO
 
 
-def new_chat(context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.chat_data["chat"] = model.start_chat()
 
+def new_chat(context: ContextTypes.DEFAULT_TYPE):
+    # Read the text file
+    with open('all_you_need_to_say.txt', 'r', encoding='utf-8') as file:
+        text = file.read()
 
+    # Clean the text by replacing newlines with spaces and stripping leading/trailing spaces
+    clean_text = ' '.join(text.split())
+
+    # Initialize a new chat using the cleaned text
+    context.chat_data["chat"] = model.start_chat(history=[
+        {
+            'role': 'user',
+            'parts': [clean_text]  # Use the cleaned text here
+        },
+        {
+            'role': 'model',
+            'parts': ['Sure.']  # Model's response
+        },
+    ])
 async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
