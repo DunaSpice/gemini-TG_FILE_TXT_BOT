@@ -35,13 +35,29 @@ def new_chat(context: ContextTypes.DEFAULT_TYPE):
             'parts': ['Sure.']  # Model's response
         },
     ])
+import asyncio
+
+import asyncio
+from datetime import datetime
+
 async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
+    message = f"Hi {user.mention_html()}!\n\nStart sending messages with me to generate a response.\n\nSend /new to start a new chat session."
+
+    # Get the current date and time
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Write user details and the timestamp to log file
+    with open('user_log.txt', 'a') as log_file:
+        log_file.write(f"{now} - User {user.id} - {user.username} started the chat.\n")
+
+    # Send the greeting message to the user
     await update.message.reply_html(
-        f"Hi {user.mention_html()}!\n\nStart sending messages with me to generate a response.\n\nSend /new to start a new chat session.",
+        message,
         # reply_markup=ForceReply(selective=True),
     )
+
 
 
 async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
