@@ -1,3 +1,4 @@
+python-telegram-bot
 anyio==4.4.0
 cachetools==5.3.3
 certifi==2024.2.2
