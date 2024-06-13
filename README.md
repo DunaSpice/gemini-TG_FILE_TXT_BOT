@@ -1,6 +1,6 @@
 <div align="center">
 
-  # GEMINI-PRO-BOT
+  # GEMINI-PRO-BOT / Duna Spice version
   
   **A Python Telegram bot powered by Google's `gemini-pro` LLM API**
 
