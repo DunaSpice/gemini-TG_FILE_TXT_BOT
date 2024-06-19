@@ -98,7 +98,7 @@ def new_chat(context: ContextTypes.DEFAULT_TYPE):
     context.chat_data["chat"] = model.start_chat(
         history=[
             {"role": "user", "parts": [clean_text]},
-            {"role": "model", "parts": ["Sure."]},
+            {"role": "model", "parts": ["Yes, i will do as you say!!!"]},
         ]
     )
 
