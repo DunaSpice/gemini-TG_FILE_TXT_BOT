@@ -51,19 +51,14 @@ img_model = genai.GenerativeModel("gemini-pro-vision", safety_settings=SAFETY_SE
 # Telegram Bot Configuration
 # =====================================
 
-# Get authorized users and owner ID from environment variables
+# Get authorized users from environment variables
 _AUTHORIZED_USERS = [
     i.strip() for i in os.getenv("AUTHORIZED_USERS", "").split(",") if i.strip()
 ]
-CONTAINER_OWNER_ID = os.getenv("CONTAINER_OWNER_ID")
 
 # Define states for conversation handlers
 NEW_INSTRUCTIONS, SAVE_INSTRUCTIONS = range(2)
 ADD_INSTRUCTIONS, APPEND_INSTRUCTIONS = range(2, 4)
-
-# Global variables for command visibility (default: both hidden)
-show_new_instructions = False
-show_add_instructions = False
 
 # =====================================
 # Custom Filters
@@ -98,7 +93,7 @@ def new_chat(context: ContextTypes.DEFAULT_TYPE):
     context.chat_data["chat"] = model.start_chat(
         history=[
             {"role": "user", "parts": [clean_text]},
-            {"role": "model", "parts": ["Yes, i will do as you say!!!"]},
+            {"role": "model", "parts": ["Sure."]},
         ]
     )
 
@@ -128,13 +123,10 @@ Basic commands:
 
 Chat commands:
 /new - Start a new chat session (model will forget previously generated messages)
-"""
-    # Add conditional help text for owner commands
-    if is_owner(update):
-        help_text += """
-Owner commands:
-/toggle_new_instructions - Show/hide the /new_instructions command.
-/toggle_add_instructions - Show/hide the /add_instructions command.
+/new_instructions - Replace the bot's instructions with new ones
+/add_instructions - Appends additional instructions
+
+Send a message to the bot to generate a response.
 """
     await update.message.reply_text(help_text)
 
@@ -187,46 +179,6 @@ async def append_instructions(update: Update, context: ContextTypes.DEFAULT_TYPE
     except IOError as e:
         await update.message.reply_text(f"Error adding instructions: {e}")
     return ConversationHandler.END
-
-# =====================================
-# Owner-Specific Command Handlers
-# =====================================
-
-def is_owner(update: Update) -> bool:
-    """Checks if the user sending the update is the bot owner."""
-    return str(update.effective_user.id) == CONTAINER_OWNER_ID
-
-
-async def toggle_new_instructions_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Toggles the visibility of the /new_instructions command."""
-    if not is_owner(update):
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
-
-    global show_new_instructions
-    show_new_instructions = not show_new_instructions
-    message = (
-        "Command /new_instructions is now visible."
-        if show_new_instructions
-        else "Command /new_instructions is now hidden."
-    )
-    await update.message.reply_text(message)
-
-
-async def toggle_add_instructions_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Toggles the visibility of the /add_instructions command."""
-    if not is_owner(update):
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
-
-    global show_add_instructions
-    show_add_instructions = not show_add_instructions
-    message = (
-        "Command /add_instructions is now visible."
-        if show_add_instructions
-        else "Command /add_instructions is now hidden."
-    )
-    await update.message.reply_text(message)
 
 
 # =====================================
@@ -360,7 +312,7 @@ async def handle_image(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
 # Markdown to HTML Formatting
 # =====================================
 
-def escape_html(text: str) -> str:
+def escape_html(text: str) -> str: # This line
     """Escapes HTML special characters in a string."""
     text = text.replace("&", "&")
     text = text.replace("<", "<")
@@ -454,38 +406,31 @@ def start_bot() -> None:
     application.add_handler(CommandHandler("help", help_command, filters=AuthFilter))
     application.add_handler(CommandHandler("new", newchat_command, filters=AuthFilter))
 
-    # Add conversation handlers for instruction management (conditionally)
-    if show_new_instructions:
-        new_instructions_handler = ConversationHandler(
-            entry_points=[
-                CommandHandler(
-                    "new_instructions", new_instructions_command, filters=AuthFilter
-                )
-            ],
-            states={
-                NEW_INSTRUCTIONS: [MessageHandler(filters.TEXT, save_instructions)],
-            },
-            fallbacks=[CommandHandler("cancel", start, filters=AuthFilter)],
-        )
-        application.add_handler(new_instructions_handler)
-
-    if show_add_instructions:
-        add_instructions_handler = ConversationHandler(
-            entry_points=[
-                CommandHandler(
-                    "add_instructions", add_instructions_command, filters=AuthFilter
-                )
-            ],
-            states={
-                ADD_INSTRUCTIONS: [MessageHandler(filters.TEXT, append_instructions)],
-            },
-            fallbacks=[CommandHandler("cancel", start, filters=AuthFilter)],
-        )
-        application.add_handler(add_instructions_handler)
-
-    # Add owner-specific command handlers
-    application.add_handler(CommandHandler("toggle_new_instructions", toggle_new_instructions_command, filters=AuthFilter))
-    application.add_handler(CommandHandler("toggle_add_instructions", toggle_add_instructions_command, filters=AuthFilter))
+    # Add conversation handlers for instruction management
+    new_instructions_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler(
+                "new_instructions", new_instructions_command, filters=AuthFilter
+            )
+        ],
+        states={
+            NEW_INSTRUCTIONS: [MessageHandler(filters.TEXT, save_instructions)],
+        },
+        fallbacks=[CommandHandler("cancel", start, filters=AuthFilter)],
+    )
+    add_instructions_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler(
+                "add_instructions", add_instructions_command, filters=AuthFilter
+            )
+        ],
+        states={
+            ADD_INSTRUCTIONS: [MessageHandler(filters.TEXT, append_instructions)],
+        },
+        fallbacks=[CommandHandler("cancel", start, filters=AuthFilter)],
+    )
+    application.add_handler(new_instructions_handler)
+    application.add_handler(add_instructions_handler)
 
     # Add message and image handlers
     application.add_handler(MessageHandler(MessageFilter, handle_message))
